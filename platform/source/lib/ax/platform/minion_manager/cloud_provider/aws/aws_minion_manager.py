@@ -32,7 +32,6 @@ from retrying import retry
 from ..base import MinionManagerBase
 from .asg_mm import AWSAutoscalinGroupMM
 
-
 logger = logging.getLogger("aws.minion-manager")
 logging.getLogger('boto3').setLevel(logging.WARNING)
 logging.getLogger('botocore').setLevel(logging.WARNING)
@@ -40,6 +39,7 @@ logging.getLogger('requests').setLevel(logging.WARNING)
 
 MM_CONFIG_MAP_NAME = "minion-manager-config"
 MM_CONFIG_MAP_NAMESPACE = "kube-system"
+
 
 class AWSMinionManager(MinionManagerBase):
     """
@@ -117,6 +117,7 @@ class AWSMinionManager(MinionManagerBase):
         Queries AWS to get current bid_price for all ASGs and stores it
         in AWSAutoscalinGroupMM.
         """
+
         @retry(wait_exponential_multiplier=1000, stop_max_attempt_number=3)
         def _describe_launch_configuration():
             response = self._ac_client.describe_launch_configurations(
@@ -200,7 +201,7 @@ class AWSMinionManager(MinionManagerBase):
                 KeyName=launch_config.KeyName,
                 SecurityGroups=launch_config.SecurityGroups,
                 ClassicLinkVPCSecurityGroups=launch_config.
-                ClassicLinkVPCSecurityGroups,
+                    ClassicLinkVPCSecurityGroups,
                 UserData=base64.b64decode(launch_config.UserData),
                 InstanceType=launch_config.InstanceType,
                 BlockDeviceMappings=launch_config.BlockDeviceMappings,
@@ -208,8 +209,8 @@ class AWSMinionManager(MinionManagerBase):
                 SpotPrice=spot_price,
                 IamInstanceProfile=launch_config.IamInstanceProfile,
                 EbsOptimized=launch_config.EbsOptimized,
-                AssociatePublicIpAddress=launch_config.
-                AssociatePublicIpAddress)
+                AssociatePublicIpAddress=launch_config.AssociatePublicIpAddress if hasattr(launch_config,
+                                                                                           "AssociatePublicIpAddress") else None)
             assert response is not None, \
                 "Failed to create launch-config {}".format(new_lc_name)
             assert response["HTTPStatusCode"] == 200, \
@@ -233,15 +234,15 @@ class AWSMinionManager(MinionManagerBase):
                 KeyName=launch_config.KeyName,
                 SecurityGroups=launch_config.SecurityGroups,
                 ClassicLinkVPCSecurityGroups=launch_config.
-                ClassicLinkVPCSecurityGroups,
+                    ClassicLinkVPCSecurityGroups,
                 UserData=base64.b64decode(launch_config.UserData),
                 InstanceType=launch_config.InstanceType,
                 BlockDeviceMappings=launch_config.BlockDeviceMappings,
                 InstanceMonitoring=launch_config.InstanceMonitoring,
                 IamInstanceProfile=launch_config.IamInstanceProfile,
                 EbsOptimized=launch_config.EbsOptimized,
-                AssociatePublicIpAddress=launch_config.
-                AssociatePublicIpAddress)
+                AssociatePublicIpAddress=launch_config.AssociatePublicIpAddress if hasattr(launch_config,
+                                                                                           "AssociatePublicIpAddress") else None)
             assert response is not None, \
                 "Failed to create launch-config {}".format(new_lc_name)
             assert response["HTTPStatusCode"] == 200, \
@@ -358,7 +359,7 @@ class AWSMinionManager(MinionManagerBase):
                 # If the instance is running for hours, only the seconds in
                 # the current hour need to be used.
                 elapsed_seconds_in_hour = elapsed_seconds % \
-                    SECONDS_PER_HOUR
+                                          SECONDS_PER_HOUR
                 # Start a thread that will check whether the instance
                 # should continue running ~40 minutes later.
                 seconds_before_check = abs((40.0 + randint(0, 19)) *
